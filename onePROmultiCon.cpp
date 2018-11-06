@@ -15,7 +15,7 @@ struct ItemRepository {
 		size_t item_counter;
 		std::mutex mtx;
 		std::mutex item_counter_mtx;
-		std::condition_variable repo_not_null;
+		std::condition_variable repo_not_full;
 		std::condition_variable repo_not_empty;
 } gItemRepository;
 
@@ -53,7 +53,7 @@ int ConsumeItem(ItemRepository* ir) {
 		if(ir->read_position >= kItemRepositorySize)
 				ir->read_position = 0;
 
-		(ir->repo_not_null).notify_all();
+		(ir->repo_not_full).notify_all();
 		lock.unlock();
 
 		return data;
