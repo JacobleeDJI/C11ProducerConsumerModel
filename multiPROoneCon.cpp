@@ -14,7 +14,7 @@ struct ItemRepository {
 		size_t write_position;
 		size_t item_counter;
 		std::mutex mtx;
-		std::condition_variable repo_not_null;
+		std::condition_variable repo_not_full;
 		std::condition_variable repo_not_empty;
 } gItemRepository;
 
@@ -24,7 +24,7 @@ void ProduceItem(ItemRepository* ir, int item) {
 		std::unique_lock<std::mutex> lock(ir->mtx);
 		while(((ir->write_position + 1) % kItemRepositorySize) == ir->read_position) { //item buffer is full, just wait here
 			std::cout << "Producer is waiting for an empty slot...\n";
-			(ir->repo_not_null).wait(lock);
+			(ir->repo_not_full).wait(lock);
 		}
 
 		(ir->item_buffer)[ir->write_position] = item;
@@ -54,7 +54,7 @@ int ConsumerItem(ItemRepository* ir) {
 				ir->read_position = 0;
 		}
 
-		(ir->repo_not_null).notify_all();
+		(ir->repo_not_full).notify_all();
 		lock.unlock();
 
 		return data;
